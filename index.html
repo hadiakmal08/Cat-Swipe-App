@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Paws & Preferences 🐾</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FDF6EC;
+    --coral: #FF6B4A;
+    --coral-light: #FF8C70;
+    --coral-dark: #E5532F;
+    --teal: #2EC4B6;
+    --teal-dark: #1FA99D;
+    --sand: #F2E0C8;
+    --gold: #FFB800;
+    --gold-light: #FFD060;
+    --dark: #1A1208;
+    --mid: #6B4F3A;
+    --light-mid: #C4A882;
+    --card-shadow: 0 30px 80px rgba(26,18,8,0.18), 0 8px 20px rgba(26,18,8,0.10);
+  }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--dark);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* ─── ANIMATED BG CANVAS ─── */
+  #bgCanvas {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; opacity: 1;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  .bg-blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .bg-blob-1 { width: 500px; height: 500px; top: -150px; right: -100px; background: radial-gradient(circle, rgba(255,107,74,0.15), transparent 70%); }
+  .bg-blob-2 { width: 400px; height: 400px; bottom: -100px; left: -80px; background: radial-gradient(circle, rgba(46,196,182,0.12), transparent 70%); }
+  .bg-blob-3 { width: 300px; height: 300px; top: 40%; left: 30%; background: radial-gradient(circle, rgba(242,224,200,0.6), transparent 70%); }
+
+  /* ─── CORNER DECORATIONS ─── */
+  .corner-deco {
+    position: fixed; pointer-events: none; z-index: 2;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .corner-deco-tl { top: 0; left: 0; }
+  .corner-deco-tr { top: 0; right: 0; }
+
+  /* Paw print SVG corners */
+  .corner-deco svg { display: block; }
+
+  /* Floating small cat emojis scattered near corners */
+  .deco-float {
+    position: fixed; pointer-events: none; z-index: 2;
+    font-size: 22px; opacity: 0.18;
+    animation: decoFloat 6s ease-in-out infinite;
+  }
+  .deco-float:nth-child(2) { animation-delay: -2s; animation-duration: 7s; }
+  .deco-float:nth-child(3) { animation-delay: -4s; animation-duration: 5.5s; }
+  @keyframes decoFloat {
+    0%,100% { transform: translateY(0) rotate(-8deg); }
+    50%      { transform: translateY(-10px) rotate(6deg); }
+  }
+
+  /* Top-left cluster */
+  .deco-tl-1 { top: 12px;  left: 14px;  font-size: 28px; opacity: 0.13; animation-delay: 0s; }
+  .deco-tl-2 { top: 48px;  left: 52px;  font-size: 16px; opacity: 0.10; animation-delay: -1.5s; }
+  .deco-tl-3 { top: 22px;  left: 68px;  font-size: 12px; opacity: 0.08; animation-delay: -3s; }
+
+  /* Top-right cluster */
+  .deco-tr-1 { top: 10px;  right: 12px; font-size: 26px; opacity: 0.12; animation-delay: -0.8s; }
+  .deco-tr-2 { top: 44px;  right: 50px; font-size: 14px; opacity: 0.09; animation-delay: -2.2s; }
+  .deco-tr-3 { top: 18px;  right: 72px; font-size: 11px; opacity: 0.07; animation-delay: -4s; }
+
+  /* Decorative arc lines top-left */
+  .deco-arc {
+    position: fixed; pointer-events: none; z-index: 2;
+    opacity: 0.07;
+  }
+  .deco-arc-tl { top: 0; left: 0; }
+  .deco-arc-tr { top: 0; right: 0; transform: scaleX(-1); }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    z-index: 1;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; transform: scale(0.97); }
+
+  /* ─── INTRO ─── */
+  #intro { padding: 36px 30px; text-align: center; gap: 0; }
+  .intro-paw { font-size: 68px; margin-bottom: 14px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-5deg);} 50%{transform:translateY(-12px) rotate(5deg);} }
+  .intro-title { font-family: 'Playfair Display', serif; font-size: clamp(34px,8vw,54px); font-weight: 900; line-height: 1.05; color: var(--dark); margin-bottom: 8px; }
+  .intro-title span { color: var(--coral); font-style: italic; }
+  .intro-sub { font-size: 14px; color: var(--mid); margin-bottom: 24px; line-height: 1.6; max-width: 280px; margin-left: auto; margin-right: auto; }
+
+  .intro-instructions {
+    display: flex;
+    gap: clamp(5px, 2vw, 12px);
+    margin-bottom: 14px;
+    justify-content: center;
+    width: 100%;
+    max-width: 560px;
+    padding: 0 clamp(10px, 4vw, 24px);
+    box-sizing: border-box;
+  }
+  .instr-card {
+    background: white;
+    border-radius: clamp(12px, 3vw, 18px);
+    flex: 1 1 0;
+    min-width: 0;
+    padding: clamp(10px, 2.5vw, 14px) clamp(4px, 1.5vw, 12px);
+    box-shadow: 0 4px 20px rgba(26,18,8,0.08);
+    border: 1.5px solid rgba(196,168,130,0.2);
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1),
+                box-shadow 0.18s ease,
+                border-color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .instr-card:hover {
+    transform: translateY(-4px) scale(1.04);
+    box-shadow: 0 10px 32px rgba(26,18,8,0.13);
+  }
+  .instr-card:active { transform: scale(0.93); }
+
+  /* colour-tinted hover per card type */
+  .instr-card.dislike:hover { border-color: rgba(255,107,74,0.4); box-shadow: 0 10px 32px rgba(255,107,74,0.18); }
+  .instr-card.rewind:hover  { border-color: rgba(124,58,237,0.4); box-shadow: 0 10px 32px rgba(124,58,237,0.18); }
+  .instr-card.crush:hover   { border-color: rgba(255,184,0,0.5);  box-shadow: 0 10px 32px rgba(255,184,0,0.22); }
+  .instr-card.like:hover    { border-color: rgba(46,196,182,0.4); box-shadow: 0 10px 32px rgba(46,196,182,0.18); }
+
+  /* ripple */
+  .instr-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: rippleOut 0.55s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleOut {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* icon bounce on click */
+  .instr-card.anim-dislike .instr-icon { animation: shakeLeft  0.45s cubic-bezier(0.36,0.07,0.19,0.97); }
+  .instr-card.anim-rewind  .instr-icon { animation: spinRewind 0.5s  cubic-bezier(0.34,1.56,0.64,1); }
+  .instr-card.anim-crush   .instr-icon { animation: crushPop   0.5s  cubic-bezier(0.34,1.56,0.64,1); }
+  .instr-card.anim-like    .instr-icon { animation: bounceRight 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+
+  @keyframes shakeLeft {
+    0%,100%{ transform: translateX(0) rotate(0); }
+    20%    { transform: translateX(-8px) rotate(-12deg); }
+    40%    { transform: translateX(5px)  rotate(8deg); }
+    60%    { transform: translateX(-4px) rotate(-5deg); }
+    80%    { transform: translateX(2px)  rotate(3deg); }
+  }
+  @keyframes spinRewind {
+    0%   { transform: rotate(0)    scale(1); }
+    40%  { transform: rotate(-200deg) scale(1.3); }
+    100% { transform: rotate(-360deg) scale(1); }
+  }
+  @keyframes crushPop {
+    0%   { transform: scale(1) rotate(0); }
+    30%  { transform: scale(1.55) rotate(-15deg); }
+    60%  { transform: scale(0.85) rotate(10deg); }
+    80%  { transform: scale(1.15) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  @keyframes bounceRight {
+    0%,100%{ transform: translateX(0) rotate(0); }
+    25%    { transform: translateX(10px) rotate(15deg); }
+    50%    { transform: translateX(-4px) rotate(-8deg); }
+    75%    { transform: translateX(6px) rotate(6deg); }
+  }
+
+  /* card flash overlay */
+  .instr-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.08s;
+  }
+  .instr-card.flash::after { opacity: 1; animation: flashFade 0.35s ease forwards; }
+  .instr-card.dislike::after { background: rgba(255,107,74,0.12); }
+  .instr-card.rewind::after  { background: rgba(124,58,237,0.10); }
+  .instr-card.crush::after   { background: rgba(255,184,0,0.14); }
+  .instr-card.like::after    { background: rgba(46,196,182,0.12); }
+  @keyframes flashFade { 0%{opacity:1;} 100%{opacity:0;} }
+
+  .instr-icon { font-size: clamp(18px, 5vw, 26px); margin-bottom: 5px; display: block; }
+  .instr-label { font-size: clamp(9px, 2.4vw, 12px); font-weight: 600; color: var(--dark); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .instr-desc  { font-size: clamp(8px, 2vw, 10px); color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .instr-card.like .instr-label { color: var(--teal); }
+  .instr-card.dislike .instr-label { color: var(--coral); }
+  .instr-card.crush .instr-label { color: var(--gold); }
+  .instr-card.rewind .instr-label { color: #7c3aed; }
+
+  .crush-info {
+    background: linear-gradient(135deg, rgba(255,184,0,0.1), rgba(255,208,96,0.06));
+    border: 1.5px solid rgba(255,184,0,0.28);
+    border-radius: 16px; padding: 11px 18px;
+    font-size: 12px; color: var(--mid); margin-bottom: 24px;
+    max-width: 300px; text-align: center; line-height: 1.55;
+  }
+  .crush-info strong { color: #b07800; }
+
+  .btn-start {
+    background: var(--coral); color: white; border: none;
+    padding: 17px 50px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 8px 30px rgba(255,107,74,0.4);
+    transition: all 0.2s ease;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,107,74,0.5); background: var(--coral-dark); }
+
+  /* ─── SWIPE SCREEN ─── */
+  #swipe { justify-content: space-between; padding: 0; gap: 0; }
+
+  .swipe-header { width: 100%; padding: 22px 26px 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
+  .header-logo { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--dark); }
+  .header-logo span { color: var(--coral); font-style: italic; }
+  .header-counter { background: white; border-radius: 100px; padding: 7px 15px; font-size: 12px; font-weight: 600; color: var(--mid); box-shadow: 0 2px 12px rgba(26,18,8,0.08); border: 1.5px solid var(--sand); }
+  .header-counter strong { color: var(--dark); }
+
+  .progress-bar-wrap { width: calc(100% - 52px); margin: 0 26px; height: 4px; background: var(--sand); border-radius: 100px; overflow: hidden; flex-shrink: 0; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--coral), var(--coral-light)); border-radius: 100px; transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1); width: 0%; }
+
+  .crush-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white; border-radius: 100px; padding: 5px 14px;
+    font-size: 12px; font-weight: 700;
+    box-shadow: 0 4px 16px rgba(255,184,0,0.35);
+    margin: 5px 26px 0; align-self: flex-end;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .crush-badge.depleted { background: linear-gradient(135deg, #bbb, #999); box-shadow: none; }
+
+  .card-stack { position: relative; flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow: visible; }
+
+  .cat-card {
+    position: absolute; width: min(330px, 88vw); height: min(450px, 64vh);
+    border-radius: 26px; overflow: hidden; box-shadow: var(--card-shadow);
+    cursor: grab; touch-action: none; will-change: transform; background: white;
+  }
+  .cat-card:active { cursor: grabbing; }
+  .cat-card.is-back-1 { transform: scale(0.94) translateY(16px); z-index: 1; pointer-events: none; }
+  .cat-card.is-back-2 { transform: scale(0.88) translateY(32px); z-index: 0; pointer-events: none; }
+  .cat-card.is-top { z-index: 5; }
+
+  .cat-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .cat-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,18,8,0.55) 0%, transparent 50%); pointer-events: none; }
+
+  .cat-card.loading img { opacity: 0; }
+  .cat-card .skeleton { position: absolute; inset: 0; background: linear-gradient(90deg, var(--sand) 25%, #f5e8d0 50%, var(--sand) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+  .stamp { position: absolute; top: 36px; padding: 9px 20px; border-radius: 11px; font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; font-style: italic; letter-spacing: 2px; opacity: 0; z-index: 20; pointer-events: none; transition: opacity 0.1s; border: 4px solid; }
+  .stamp-like { left: 18px; color: var(--teal); border-color: var(--teal); transform: rotate(-20deg); }
+  .stamp-nope { right: 18px; color: var(--coral); border-color: var(--coral); transform: rotate(20deg); }
+  .stamp-crush {
+    left: 50%; top: 50%; transform: translate(-50%,-50%) scale(0);
+    color: var(--gold); border-color: var(--gold);
+    font-size: 20px; border-radius: 14px;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    opacity: 0;
+  }
+  .stamp-crush.show { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+
+  .card-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 20px; z-index: 10; pointer-events: none; }
+  .card-num { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 700; color: white; }
+
+  .btn-crush-card {
+    position: absolute; top: 12px; right: 12px; z-index: 25;
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    font-size: 19px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: all;
+  }
+  .btn-crush-card:hover { transform: scale(1.18); box-shadow: 0 6px 20px rgba(255,184,0,0.4); }
+  .btn-crush-card:active { transform: scale(0.88); }
+  .btn-crush-card.crushed { background: var(--gold); box-shadow: 0 4px 18px rgba(255,184,0,0.5); }
+  .btn-crush-card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  @keyframes crushGlow {
+    0%   { box-shadow: var(--card-shadow); outline-color: transparent; }
+    30%  { box-shadow: 0 0 0 8px rgba(255,184,0,0.5), 0 20px 60px rgba(255,184,0,0.3); outline-color: var(--gold); }
+    60%  { box-shadow: 0 0 0 4px rgba(255,184,0,0.3), 0 30px 80px rgba(26,18,8,0.18); }
+    100% { box-shadow: var(--card-shadow); outline-color: transparent; }
+  }
+
+  .swipe-actions { display: flex; gap: 16px; padding: 14px 28px 26px; justify-content: center; align-items: center; flex-shrink: 0; z-index: 10; }
+
+  /* rewind badge */
+  .rewind-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+    color: white; border-radius: 100px; padding: 5px 14px;
+    font-size: 12px; font-weight: 700;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+    margin: 0 26px 0 0; align-self: flex-end;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    order: 99;
+  }
+  .rewind-badge.depleted { background: linear-gradient(135deg, #bbb, #999); box-shadow: none; }
+
+  .btn-rewind { background: white; }
+  .btn-rewind:hover { box-shadow: 0 8px 28px rgba(124,58,237,0.3); }
+  .btn-rewind.depleted { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  .action-btn { width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 25px; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 6px 20px rgba(26,18,8,0.12); background: white; }
+  .action-btn:hover { transform: scale(1.12); }
+  .action-btn:active { transform: scale(0.92); }
+  .btn-dislike:hover { box-shadow: 0 8px 28px rgba(255,107,74,0.3); }
+  .btn-like:hover { box-shadow: 0 8px 28px rgba(46,196,182,0.3); }
+  .btn-crush-action { background: white; }
+  .btn-crush-action:hover { box-shadow: 0 8px 28px rgba(255,184,0,0.4); }
+  .btn-crush-action.depleted { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  .swipe-hint { font-size: 11px; color: var(--light-mid); text-align: center; padding-bottom: 2px; flex-shrink: 0; }
+
+  /* ─── RESULTS ─── */
+  #results { flex-direction: column; padding: 0; overflow: hidden; }
+  .results-header { width: 100%; padding: 26px 26px 14px; flex-shrink: 0; text-align: center; }
+  .results-emoji { font-size: 50px; margin-bottom: 9px; display: block; }
+  .results-title { font-family: 'Playfair Display', serif; font-size: clamp(24px,7vw,38px); font-weight: 900; line-height: 1.1; margin-bottom: 4px; }
+  .results-title span { color: var(--coral); font-style: italic; }
+  .results-sub { font-size: 13px; color: var(--mid); margin-bottom: 13px; }
+
+  .stats-row { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; }
+  .stat-pill { padding: 8px 16px; border-radius: 100px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .stat-pill.liked { background: rgba(46,196,182,0.12); color: var(--teal-dark); }
+  .stat-pill.disliked { background: rgba(255,107,74,0.1); color: var(--coral-dark); }
+  .stat-pill.crushed { background: rgba(255,184,0,0.13); color: #8a6000; }
+
+  .liked-section { flex: 1; width: 100%; overflow-y: auto; padding: 10px 18px 14px; -webkit-overflow-scrolling: touch; }
+  .liked-section::-webkit-scrollbar { width: 4px; }
+  .liked-section::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 4px; }
+
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; color: var(--light-mid); margin-bottom: 9px; text-align: center; }
+
+  /* CRUSH SPOTLIGHT */
+  .crush-spotlight { margin-bottom: 18px; }
+  .crush-spotlight-grid { display: grid; gap: 9px; }
+  .crush-spotlight-grid.count-1 { grid-template-columns: 1fr; }
+  .crush-spotlight-grid.count-2 { grid-template-columns: 1fr 1fr; }
+  .crush-spotlight-grid.count-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .crush-item {
+    position: relative; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 6px 28px rgba(255,184,0,0.28);
+    border: 2.5px solid var(--gold);
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    cursor: pointer;
+  }
+  .crush-item.count-1 { aspect-ratio: 16/9; max-height: 200px; }
+  .crush-item.count-2, .crush-item.count-3 { aspect-ratio: 1; }
+  .crush-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .crush-badge-overlay { position: absolute; top: 7px; left: 7px; background: var(--gold); color: white; border-radius: 100px; padding: 3px 9px; font-size: 10px; font-weight: 700; box-shadow: 0 2px 8px rgba(255,184,0,0.4); display: flex; align-items: center; gap: 3px; }
+  .cat-name-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(26,18,8,0.7), transparent); padding: 18px 10px 8px; font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: white; }
+
+  .crush-item.spinning img { animation: spinBounce 0.65s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes spinBounce { 0%{transform:rotate(0) scale(1);} 30%{transform:rotate(180deg) scale(1.1);} 100%{transform:rotate(360deg) scale(1);} }
+
+  .liked-item {
+    aspect-ratio: 1; border-radius: 13px; overflow: hidden;
+    box-shadow: 0 3px 12px rgba(26,18,8,0.1);
+    position: relative; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+  }
+  .liked-item:hover { transform: scale(1.06); box-shadow: 0 8px 24px rgba(26,18,8,0.18); }
+  .liked-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .liked-item.spinning img { animation: spinBounce 0.65s cubic-bezier(0.34,1.56,0.64,1); }
+  .liked-item::after { content: '💚'; position: absolute; bottom: 5px; right: 5px; font-size: 11px; }
+
+  @keyframes popIn { from{opacity:0;transform:scale(0.55);} to{opacity:1;transform:scale(1);} }
+
+  .no-likes { text-align: center; padding: 36px 20px; color: var(--mid); width: 100%; }
+  .no-likes .no-emoji { font-size: 46px; margin-bottom: 12px; display: block; }
+  .no-likes p { font-size: 14px; line-height: 1.65; }
+
+  .results-footer { padding: 12px 28px 26px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; gap: clamp(10px, 3vw, 18px); }
+  .btn-quit {
+    background: transparent; color: var(--mid); border: 1.5px solid rgba(107,79,58,0.28);
+    padding: clamp(12px,2.5vw,16px) clamp(20px,4vw,32px); border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: clamp(13px,3vw,15px); font-weight: 500; cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+  }
+  .btn-quit:hover { border-color: var(--coral); color: var(--coral); transform: translateY(-2px); }
+  .btn-quit:active { transform: scale(0.95); }
+
+  /* ─── QUIT POPUPS ─── */
+  .popup-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(26,18,8,0.45); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(16px,4vw,32px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .popup-overlay.visible { opacity: 1; pointer-events: all; }
+
+  .popup-box {
+    background: white; border-radius: clamp(20px,4vw,28px);
+    width: min(clamp(280px,90vw,420px), 96vw);
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(26,18,8,0.28), 0 8px 20px rgba(26,18,8,0.12);
+    transform: scale(0.7) translateY(30px);
+    transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .popup-overlay.visible .popup-box { transform: scale(1) translateY(0); }
+
+  .popup-header {
+    padding: clamp(18px,4vw,26px) clamp(20px,5vw,32px) clamp(14px,3vw,20px);
+    text-align: center;
+  }
+  .popup-header-1 { background: linear-gradient(135deg, #FF6B4A, #FF8C70); }
+  .popup-header-2 { background: linear-gradient(135deg, #2EC4B6, #1FA99D); }
+
+  .popup-header-emoji { font-size: clamp(36px,8vw,52px); display: block; margin-bottom: clamp(6px,1.5vw,10px); }
+  .popup-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(18px,5vw,26px); font-weight: 900;
+    color: white; line-height: 1.1;
+  }
+
+  .popup-body {
+    padding: clamp(18px,4vw,28px) clamp(20px,5vw,32px) clamp(20px,4vw,28px);
+    text-align: center;
+  }
+  .popup-body p {
+    font-size: clamp(13px,3.2vw,15px); color: var(--mid); line-height: 1.65;
+    margin-bottom: clamp(18px,4vw,26px);
+  }
+
+  .popup-btns { display: flex; flex-direction: column; gap: clamp(8px,2vw,12px); }
+
+  .popup-btn-stay {
+    background: var(--coral); color: white; border: none;
+    padding: clamp(13px,3vw,16px) clamp(20px,5vw,28px); border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: clamp(13px,3.2vw,15px); font-weight: 600; cursor: pointer;
+    box-shadow: 0 6px 22px rgba(255,107,74,0.38);
+    transition: all 0.2s ease;
+  }
+  .popup-btn-stay:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,107,74,0.5); }
+  .popup-btn-stay:active { transform: scale(0.95); }
+
+  .popup-btn-quit {
+    background: transparent; color: var(--mid); border: 1.5px solid rgba(107,79,58,0.25);
+    padding: clamp(11px,2.5vw,14px) clamp(20px,5vw,28px); border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: clamp(12px,3vw,14px); font-weight: 500; cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .popup-btn-quit:hover { border-color: var(--mid); color: var(--dark); }
+  .popup-btn-quit:active { transform: scale(0.95); }
+
+  .popup-btn-fine {
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: white; border: none;
+    padding: clamp(13px,3vw,16px) clamp(20px,5vw,28px); border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: clamp(13px,3.2vw,15px); font-weight: 600; cursor: pointer;
+    box-shadow: 0 6px 22px rgba(46,196,182,0.38);
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+  .popup-btn-fine:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(46,196,182,0.5); }
+  .popup-btn-fine:active { transform: scale(0.95); }
+
+  /* wiggle animation */
+  @keyframes wiggleShake {
+    0%,100% { transform: scale(1) rotate(0deg); }
+    10%  { transform: scale(1.04) rotate(-4deg); }
+    20%  { transform: scale(1.04) rotate(4deg); }
+    30%  { transform: scale(1.04) rotate(-3deg); }
+    40%  { transform: scale(1.04) rotate(3deg); }
+    50%  { transform: scale(1.02) rotate(-2deg); }
+    60%  { transform: scale(1.02) rotate(2deg); }
+    80%  { transform: scale(1.01) rotate(-1deg); }
+  }
+  .popup-box.wiggle { animation: wiggleShake 0.55s cubic-bezier(0.36,0.07,0.19,0.97); }
+
+  /* spin-shrink exit */
+  @keyframes spinShrink {
+    0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+    60%  { transform: scale(1.08) rotate(180deg); opacity: 0.8; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+  }
+  .popup-box.spin-exit { animation: spinShrink 0.5s cubic-bezier(0.4,0,0.6,1) forwards; }
+
+  /* confetti pieces */
+  .confetti-piece {
+    position: fixed; font-size: clamp(18px,4vw,28px); pointer-events: none; z-index: 10001;
+    animation: confettiBurst var(--dur,0.9s) ease-out forwards;
+  }
+  @keyframes confettiBurst {
+    0%   { transform: translate(0,0) scale(0) rotate(0deg); opacity: 1; }
+    60%  { opacity: 1; }
+    100% { transform: translate(var(--tx),var(--ty)) scale(1.1) rotate(var(--rot)); opacity: 0; }
+  }
+
+  .btn-restart {
+    background: var(--coral); color: white; border: none;
+    padding: 16px 44px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(255,107,74,0.35);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, background 0.3s, letter-spacing 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .btn-restart::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: 100px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .btn-restart:hover {
+    transform: translateY(-5px) scale(1.07);
+    box-shadow: 0 18px 44px rgba(255,107,74,0.55);
+    background: var(--coral-dark);
+    letter-spacing: 0.6px;
+  }
+  .btn-restart:hover::after { opacity: 1; }
+  .btn-restart:active { transform: scale(0.95) translateY(0); }
+
+  /* ─── FLYING EMOJIS ─── */
+  .fly-emoji { position: fixed; font-size: 28px; pointer-events: none; z-index: 9998; animation: flyUp 0.9s ease forwards; }
+  @keyframes flyUp { 0%{transform:translateY(0) scale(1);opacity:1;} 100%{transform:translateY(-140px) scale(1.5);opacity:0;} }
+
+  /* ─── BG CAT POP ─── */
+  .bg-cat-pop {
+    position: fixed; pointer-events: none; z-index: 9990;
+    font-size: 30px; transform-origin: center;
+    animation: catPop 1.4s ease forwards;
+  }
+  @keyframes catPop {
+    0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+    15%  { transform: scale(1.35) rotate(10deg); opacity: 1; }
+    30%  { transform: scale(0.88) rotate(-6deg); opacity: 1; }
+    45%  { transform: scale(1.1) rotate(4deg); opacity: 1; }
+    62%  { transform: scale(1) rotate(0deg); opacity: 1; }
+    80%  { transform: scale(1.02) rotate(-3deg); opacity: 0.85; }
+    100% { transform: scale(0.5) translateY(-28px); opacity: 0; }
+  }
+
+  /* ─── LOADING ─── */
+  #loading { gap: 16px; }
+  .loading-paw { font-size: 52px; animation: pulse 0.8s ease-in-out infinite alternate; }
+  @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.2);} }
+  .loading-text { font-size: 15px; color: var(--mid); font-weight: 500; }
+  .loading-dots span { display:inline-block; animation: dotBounce 1.2s ease-in-out infinite; font-size: 24px; color: var(--coral); }
+  .loading-dots span:nth-child(2){animation-delay:0.2s;}
+  .loading-dots span:nth-child(3){animation-delay:0.4s;}
+  @keyframes dotBounce { 0%,80%,100%{transform:translateY(0);} 40%{transform:translateY(-10px);} }
+
+  /* crush toast */
+  .crush-toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(16px);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: white; border-radius: 100px; padding: 11px 22px;
+    font-size: 13px; font-weight: 700; z-index: 9995;
+    box-shadow: 0 8px 30px rgba(255,184,0,0.4);
+    opacity: 0; pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .crush-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── RESPONSIVE RESULT GRID ─── */
+  /* Base (mobile): 3 col small thumbnails */
+  .liked-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(6px, 1.5vw, 12px); }
+  .liked-item { border-radius: clamp(10px, 2vw, 16px); }
+
+  @media (min-width: 600px) {
+    #results { max-width: 700px; margin: 0 auto; }
+    .liked-section { padding: 10px clamp(20px, 4vw, 40px) 14px; }
+    /* 3 columns but bigger — use clamp so items scale up nicely */
+    .liked-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(10px, 2vw, 18px);
+    }
+    .liked-item { border-radius: clamp(12px, 2vw, 20px); }
+    /* Crush spotlight — nicely centered and bigger */
+    .crush-spotlight-grid.count-1 { max-width: 480px; margin: 0 auto; }
+    .crush-spotlight-grid.count-2 { grid-template-columns: repeat(2, clamp(160px,22vw,240px)); justify-content: center; }
+    .crush-spotlight-grid.count-3 { grid-template-columns: repeat(3, clamp(130px,17vw,190px)); justify-content: center; }
+    .crush-item.count-1 { max-height: clamp(200px, 28vh, 280px); }
+  }
+
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+<div class="bg-blob bg-blob-3"></div>
+
+<!-- Corner decorative arcs -->
+<svg class="deco-arc deco-arc-tl" width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 140 Q0 0 140 0" stroke="#FF6B4A" stroke-width="2.5" fill="none"/>
+  <path d="M0 110 Q0 0 110 0" stroke="#2EC4B6" stroke-width="1.8" fill="none"/>
+  <path d="M0 80  Q0 0  80 0" stroke="#FFB800" stroke-width="1.2" fill="none"/>
+  <circle cx="8"  cy="8"  r="3.5" fill="#FF6B4A"/>
+  <circle cx="20" cy="5"  r="2"   fill="#2EC4B6"/>
+  <circle cx="5"  cy="22" r="2"   fill="#FFB800"/>
+</svg>
+<svg class="deco-arc deco-arc-tr" width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 140 Q0 0 140 0" stroke="#FF6B4A" stroke-width="2.5" fill="none"/>
+  <path d="M0 110 Q0 0 110 0" stroke="#2EC4B6" stroke-width="1.8" fill="none"/>
+  <path d="M0 80  Q0 0  80 0" stroke="#FFB800" stroke-width="1.2" fill="none"/>
+  <circle cx="8"  cy="8"  r="3.5" fill="#FF6B4A"/>
+  <circle cx="20" cy="5"  r="2"   fill="#2EC4B6"/>
+  <circle cx="5"  cy="22" r="2"   fill="#FFB800"/>
+</svg>
+
+<!-- Floating cat emoji decorations -->
+<span class="deco-float deco-tl-1">🐱</span>
+<span class="deco-float deco-tl-2">🐾</span>
+<span class="deco-float deco-tl-3">✦</span>
+<span class="deco-float deco-tr-1">😸</span>
+<span class="deco-float deco-tr-2">🐾</span>
+<span class="deco-float deco-tr-3">✦</span>
+
+<!-- LOADING -->
+<div class="screen" id="loading">
+  <div class="loading-paw">🐾</div>
+  <div class="loading-text">Fetching adorable cats</div>
+  <div class="loading-dots"><span>·</span><span>·</span><span>·</span></div>
+</div>
+
+<!-- INTRO -->
+<div class="screen hidden" id="intro">
+  <span class="intro-paw">🐱</span>
+  <h1 class="intro-title">Paws &<br><span>Preferences</span></h1>
+  <p class="intro-sub">Swipe through adorable cats and discover your purr-fect match.</p>
+  <div class="intro-instructions">
+    <div class="instr-card dislike" data-anim="dislike" data-emoji="👈" onclick="animInstrCard(this)">
+      <span class="instr-icon">👈</span>
+      <div class="instr-label">Swipe Left</div>
+      <div class="instr-desc">Not your vibe</div>
+    </div>
+    <div class="instr-card rewind" data-anim="rewind" data-emoji="⏪" onclick="animInstrCard(this)">
+      <span class="instr-icon">⏪</span>
+      <div class="instr-label">Rewind</div>
+      <div class="instr-desc">Take it back!</div>
+    </div>
+    <div class="instr-card crush" data-anim="crush" data-emoji="💎" onclick="animInstrCard(this)">
+      <span class="instr-icon">💎</span>
+      <div class="instr-label">Crush</div>
+      <div class="instr-desc">Super fave!</div>
+    </div>
+    <div class="instr-card like" data-anim="like" data-emoji="👉" onclick="animInstrCard(this)">
+      <span class="instr-icon">👉</span>
+      <div class="instr-label">Swipe Right</div>
+      <div class="instr-desc">You love it!</div>
+    </div>
+  </div>
+  <div class="crush-info">
+    💎 <strong>Crush</strong> — Tap the diamond on a card to give it a Super Crush (3 per game). Crushed cats get the spotlight on your results!<br><br>
+    ⏪ <strong>Rewind</strong> — Changed your mind? Tap rewind to bring the last card back and decide again. You get <strong>2 rewinds</strong> per game, so use them wisely!
+  </div>
+  <button class="btn-start" onclick="startGame()">Let's go! 🐾</button>
+</div>
+
+<!-- SWIPE -->
+<div class="screen hidden" id="swipe">
+  <div class="swipe-header">
+    <div class="header-logo">Paws & <span>Pref.</span></div>
+    <div class="header-counter" id="counter">Cat <strong>1</strong> / 15</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin:5px 26px 0;align-self:flex-end;">
+    <div class="crush-badge" id="crushBadge">
+      💎 <span id="crushLeft">3</span> crushes left
+    </div>
+    <div class="rewind-badge" id="rewindBadge">
+      ⏪ <span id="rewindLeft">2</span> rewinds
+    </div>
+  </div>
+  <div class="card-stack" id="cardStack"></div>
+  <div class="swipe-hint">Swipe or tap buttons · Tap 💎 on card to crush</div>
+  <div class="swipe-actions">
+    <button class="action-btn btn-dislike" onclick="triggerDislike()" title="Nope">❌</button>
+    <button class="action-btn btn-rewind" id="btnRewind" onclick="triggerRewind()" title="Rewind">⏪</button>
+    <button class="action-btn btn-crush-action" onclick="triggerCrushAction()" title="Crush">💎</button>
+    <button class="action-btn btn-like" onclick="triggerLike()" title="Like">💚</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen hidden" id="results">
+  <div class="results-header">
+    <span class="results-emoji" id="resultsEmoji">🎉</span>
+    <div class="results-title" id="resultsTitle">You're a <span>cat lover!</span></div>
+    <div class="results-sub" id="resultsSub">Here are your favourites</div>
+    <div class="stats-row" id="statsRow"></div>
+  </div>
+  <div class="liked-section" id="likedSection"></div>
+  <div class="results-footer">
+    <button class="btn-restart" onclick="restartGame()">🔄 Play Again</button>
+    <button class="btn-quit" onclick="openQuitPopup1()">✕ Quit</button>
+  </div>
+</div>
+
+<!-- QUIT POPUP 1 -->
+<div class="popup-overlay" id="quitPopup1">
+  <div class="popup-box" id="quitBox1">
+    <div class="popup-header popup-header-1">
+      <span class="popup-header-emoji">😿</span>
+      <div class="popup-header-title">Wait, leaving already?</div>
+    </div>
+    <div class="popup-body">
+      <p>But there are so many more cats waiting for you to judge them! Are you sure you want to leave your feline friends behind?</p>
+      <div class="popup-btns">
+        <button class="popup-btn-stay" onclick="quitStay()">No, stay! 🐱</button>
+        <button class="popup-btn-quit" onclick="quitConfirm()">Yes, quit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIT POPUP 2 -->
+<div class="popup-overlay" id="quitPopup2">
+  <div class="popup-box" id="quitBox2">
+    <div class="popup-header popup-header-2">
+      <span class="popup-header-emoji">😤</span>
+      <div class="popup-header-title">No! You should play more!</div>
+    </div>
+    <div class="popup-body">
+      <p>Okay fine, you win. But you know you want another round. All those cats aren't going to judge themselves…</p>
+      <div class="popup-btns">
+        <button class="popup-btn-fine" onclick="quitFine()">Fine… 😄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="crush-toast" id="crushToast"></div>
+
+<script>
+  const TOTAL = 15;
+  const MAX_CRUSHES = 3;
+  const MAX_REWINDS = 2;
+  const CAT_EMOJIS = ['🐱','😺','😸','😹','😻','😼','🙀','🐾','🐈','🐈‍⬛'];
+  const CAT_NAMES  = ["Whiskers","Mittens","Luna","Shadow","Simba","Nala","Mochi","Pumpkin","Biscuit","Cleo","Ziggy","Pepper","Maple","Cosmo","Oreo"];
+  const SWIPE_THRESHOLD = 100;
+
+  let cats = [];
+  let currentIndex = 0;
+  let isAnimating  = false;
+  let crushesLeft  = MAX_CRUSHES;
+  let rewindsLeft  = MAX_REWINDS;
+  let history      = []; // stack of {idx, liked, crushed} for rewinding
+
+  /* ── Web Audio sounds ── */
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playTone(opts) {
+    // opts: { freq, freq2, type, attack, decay, sustain, release, gain, detune }
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      const { freq = 440, freq2, type = 'sine', attack = 0.01, decay = 0.1,
+              sustain = 0.4, release = 0.25, gain = 0.18, detune = 0 } = opts;
+
+      const osc = ctx.createOscillator();
+      const osc2 = freq2 ? ctx.createOscillator() : null;
+      const gainNode = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 3000;
+
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.detune.value = detune;
+      osc.connect(filter);
+
+      if (osc2) {
+        osc2.type = type;
+        osc2.frequency.value = freq2;
+        osc2.connect(filter);
+      }
+
+      filter.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(gain, now + attack);
+      gainNode.gain.linearRampToValueAtTime(gain * sustain, now + attack + decay);
+      gainNode.gain.linearRampToValueAtTime(0, now + attack + decay + release);
+
+      osc.start(now); osc.stop(now + attack + decay + release + 0.05);
+      if (osc2) { osc2.start(now); osc2.stop(now + attack + decay + release + 0.05); }
+    } catch(e) {}
+  }
+
+  function playCrushSound() {
+    // Sparkling magical chord: root + major third + fifth, rising arpeggio
+    playTone({ freq: 523.25, type: 'sine',     attack: 0.01, decay: 0.08, sustain: 0.5, release: 0.35, gain: 0.15 });
+    setTimeout(() => playTone({ freq: 659.25, freq2: 783.99, type: 'sine', attack: 0.01, decay: 0.06, sustain: 0.4, release: 0.3, gain: 0.12 }), 80);
+    setTimeout(() => playTone({ freq: 1046.5, type: 'sine',  attack: 0.01, decay: 0.05, sustain: 0.3, release: 0.4, gain: 0.09 }), 160);
+  }
+
+  function playBgClickSound() {
+    // Soft, playful "boop" — short sine blip
+    playTone({ freq: 660 + Math.random() * 220, type: 'sine', attack: 0.005, decay: 0.04, sustain: 0.1, release: 0.12, gain: 0.08 });
+  }
+
+  /* ── background click → cat emoji pop ── */
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('button, .cat-card, .liked-item, .crush-item, .crush-toast')) return;
+    spawnBgCat(e.clientX, e.clientY);
+    playBgClickSound();
+  });
+
+  function spawnBgCat(x, y) {
+    const el = document.createElement('div');
+    el.className = 'bg-cat-pop';
+    el.textContent = CAT_EMOJIS[Math.floor(Math.random() * CAT_EMOJIS.length)];
+    el.style.left = (x - 18) + 'px';
+    el.style.top  = (y - 18) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+
+  /* ── preload: fetch as blob so the exact same image is used everywhere ── */
+  async function fetchCatBlob(i) {
+    const url = `https://cataas.com/cat?width=400&height=520&t=${Date.now()}&i=${i}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('bad response');
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
+    } catch {
+      // fallback: just return the direct URL (may differ but better than nothing)
+      return url;
+    }
+  }
+
+
+  async function fetchAllCats(onProgress) {
+    // Fetch in parallel batches of 5 to balance speed vs. rate-limiting
+    const BATCH = 5;
+    const result = [];
+    for (let start = 0; start < TOTAL; start += BATCH) {
+      const end = Math.min(start + BATCH, TOTAL);
+      const batch = await Promise.all(
+        Array.from({ length: end - start }, (_, j) => fetchCatBlob(start + j))
+      );
+      batch.forEach((url, j) => {
+        result.push({ url, name: CAT_NAMES[start + j], liked: null, crushed: false });
+      });
+      if (onProgress) onProgress(end);
+    }
+    return result;
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const loadTxt = document.querySelector('.loading-text');
+    cats = await fetchAllCats(n => { loadTxt.textContent = `Fetching cats... ${n} / ${TOTAL}`; });
+    showScreen('intro');
+  });
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function startGame() {
+    currentIndex = 0;
+    crushesLeft  = MAX_CRUSHES;
+    cats.forEach(c => { c.liked = null; c.crushed = false; });
+    rewindsLeft = MAX_REWINDS;
+    history = [];
+    updateCrushBadge();
+    updateRewindBadge();
+    buildStack();
+    updateProgress();
+    showScreen('swipe');
+  }
+
+  async function restartGame() {
+    // Revoke old blob URLs to free memory
+    cats.forEach(c => { try { URL.revokeObjectURL(c.url); } catch(e){} });
+    cats = [];
+    showScreen('loading');
+    const loadTxt = document.querySelector('.loading-text');
+    cats = await fetchAllCats(n => { loadTxt.textContent = 'Fetching new cats... ' + n + ' / ' + TOTAL; });
+    // Show intro screen so user sees main page before starting
+    showScreen('intro');
+  }
+
+  /* ── stack ── */
+  function buildStack() {
+    const stack = document.getElementById('cardStack');
+    stack.innerHTML = '';
+    const visible = Math.min(3, TOTAL - currentIndex);
+    for (let i = visible - 1; i >= 0; i--) {
+      const idx = currentIndex + i;
+      if (idx < TOTAL) {
+        const card = createCard(idx);
+        if      (i === 0) card.classList.add('is-top');
+        else if (i === 1) card.classList.add('is-back-1');
+        else              card.classList.add('is-back-2');
+        stack.appendChild(card);
+      }
+    }
+    const top = stack.querySelector('.is-top');
+    if (top) attachDrag(top);
+    updateCounter();
+  }
+
+  function createCard(idx) {
+    const cat  = cats[idx];
+    const card = document.createElement('div');
+    card.className = 'cat-card loading';
+    card.dataset.index = idx;
+    const crushDisabled = crushesLeft === 0 && !cat.crushed;
+    card.innerHTML = `
+      <div class="skeleton"></div>
+      <img src="${cat.url}" alt="${cat.name}"
+           onload="this.parentNode.classList.remove('loading');var s=this.previousElementSibling;if(s&&s.classList.contains('skeleton'))s.remove();">
+      <button class="btn-crush-card${cat.crushed?' crushed':''}${crushDisabled?' disabled':''}"
+              onclick="toggleCrush(event,${idx})" title="Crush!">💎</button>
+      <div class="stamp stamp-like">LIKE</div>
+      <div class="stamp stamp-nope">NOPE</div>
+      <div class="stamp stamp-crush">💎 CRUSH!</div>
+      <div class="card-info">
+        <div class="card-num">Cat ${idx+1} of ${TOTAL}</div>
+        <div class="card-title">${cat.name}</div>
+      </div>`;
+    return card;
+  }
+
+  /* ── crush logic ── */
+  function toggleCrush(e, idx) {
+    e.stopPropagation(); e.preventDefault();
+    if (isAnimating) return;
+    const cat  = cats[idx];
+    const card = document.querySelector(`.cat-card[data-index="${idx}"]`);
+    if (!card) return;
+
+    // only top card can be crushed
+    if (!card.classList.contains('is-top')) return;
+
+    if (crushesLeft <= 0 && !cat.crushed) {
+      showToast('❌ No crushes left!');
+      return;
+    }
+
+    const btn   = card.querySelector('.btn-crush-card');
+    const stamp = card.querySelector('.stamp-crush');
+
+    cat.crushed = true;
+    btn.classList.add('crushed');
+    crushesLeft--;
+    updateCrushBadge();
+    document.querySelectorAll('.btn-crush-card:not(.crushed)').forEach(b => {
+      crushesLeft === 0 ? b.classList.add('disabled') : b.classList.remove('disabled');
+    });
+
+    // Show CRUSH stamp
+    stamp.classList.add('show');
+
+    // Light up the card with a gold glow flash
+    card.style.transition = 'box-shadow 0.15s ease, outline 0.15s ease';
+    card.style.outline = '4px solid var(--gold)';
+    card.style.boxShadow = '0 0 0 6px rgba(255,184,0,0.35), 0 30px 80px rgba(26,18,8,0.18)';
+
+    spawnFlyEmoji(e.clientX, e.clientY, '💎');
+    playCrushSound();
+    showToast(crushesLeft > 0 ? `💎 Crushed! ${crushesLeft} left` : '💎 Last crush used!');
+
+    // After a short sparkle delay, auto-swipe right
+    setTimeout(() => {
+      stamp.classList.remove('show');
+      card.style.outline = '';
+      card.style.boxShadow = '';
+      swipeCard(card, 'right');
+    }, 700);
+  }
+
+  function updateRewindBadge() {
+    document.getElementById('rewindLeft').textContent = rewindsLeft;
+    const badge = document.getElementById('rewindBadge');
+    const btn   = document.getElementById('btnRewind');
+    badge.classList.toggle('depleted', rewindsLeft === 0);
+    btn  && btn.classList.toggle('depleted', rewindsLeft === 0 || currentIndex === 0 || history.length === 0);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('crushToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  function updateCrushBadge() {
+    document.getElementById('crushLeft').textContent = crushesLeft;
+    document.getElementById('crushBadge').classList.toggle('depleted', crushesLeft === 0);
+  }
+
+  /* ── drag ── */
+  function attachDrag(card) {
+    let startX, startY, currentX = 0, isDragging = false;
+
+    const onStart = (e) => {
+      if (isAnimating || e.target.closest('.btn-crush-card')) return;
+      isDragging = true;
+      const pt = e.touches ? e.touches[0] : e;
+      startX = pt.clientX; startY = pt.clientY;
+      card.style.transition = 'none';
+    };
+
+    const onMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const pt = e.touches ? e.touches[0] : e;
+      currentX = pt.clientX - startX;
+      const cy = pt.clientY - startY;
+      card.style.transform = `translate(${currentX}px,${cy * 0.4}px) rotate(${currentX * 0.08}deg)`;
+
+      const ratio = Math.min(Math.abs(currentX) / SWIPE_THRESHOLD, 1);
+      card.querySelector('.stamp-like').style.opacity = currentX > 20  ? ratio * 1.1 : 0;
+      card.querySelector('.stamp-nope').style.opacity = currentX < -20 ? ratio * 1.1 : 0;
+
+      const stack = document.getElementById('cardStack');
+      if      (currentX > 20)  stack.style.background = `rgba(46,196,182,${ratio*0.06})`;
+      else if (currentX < -20) stack.style.background = `rgba(255,107,74,${ratio*0.06})`;
+      else                     stack.style.background = '';
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      document.getElementById('cardStack').style.background = '';
+      if      (currentX > SWIPE_THRESHOLD)  swipeCard(card, 'right');
+      else if (currentX < -SWIPE_THRESHOLD) swipeCard(card, 'left');
+      else {
+        card.style.transition = 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)';
+        card.style.transform  = '';
+        card.querySelector('.stamp-like').style.opacity = 0;
+        card.querySelector('.stamp-nope').style.opacity = 0;
+      }
+      currentX = 0;
+    };
+
+    card.addEventListener('mousedown', onStart);
+    card.addEventListener('touchstart', onStart, {passive:false});
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+
+    card._cleanup = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+  }
+
+  function triggerLike()    { const t = document.querySelector('.cat-card.is-top'); if (t && !isAnimating) swipeCard(t,'right'); }
+  function triggerCrushAction() {
+    const t = document.querySelector('.cat-card.is-top');
+    if (!t || isAnimating) return;
+    // Simulate clicking the diamond button on the top card
+    const btn = t.querySelector('.btn-crush-card');
+    if (btn && !btn.classList.contains('disabled')) btn.click();
+    else if (crushesLeft <= 0) showToast('❌ No crushes left!');
+  }
+  function triggerDislike() { const t = document.querySelector('.cat-card.is-top'); if (t && !isAnimating) swipeCard(t,'left');  }
+
+  function triggerRewind() {
+    if (isAnimating || rewindsLeft <= 0 || history.length === 0) return;
+    isAnimating = true;
+
+    const prev = history.pop();
+
+    // Restore cat state
+    if (prev.prevCrushed !== undefined && cats[prev.idx].crushed && !prev.prevCrushed) {
+      // was crushed during this turn — restore crush count
+      crushesLeft = Math.min(MAX_CRUSHES, crushesLeft + 1);
+      updateCrushBadge();
+      document.querySelectorAll('.btn-crush-card:not(.crushed)').forEach(b => b.classList.remove('disabled'));
+    }
+    cats[prev.idx].liked   = prev.prevLiked;
+    cats[prev.idx].crushed = prev.prevCrushed || false;
+
+    currentIndex--;
+    rewindsLeft--;
+    updateRewindBadge();
+    updateProgress();
+
+    const stack = document.getElementById('cardStack');
+
+    // Demote current top→back-1, back-1→back-2, remove back-2
+    const curTop  = stack.querySelector('.is-top');
+    const curBack1 = stack.querySelector('.is-back-1');
+    const curBack2 = stack.querySelector('.is-back-2');
+
+    if (curBack2) curBack2.remove();
+
+    if (curBack1) {
+      curBack1.classList.replace('is-back-1','is-back-2');
+      curBack1.style.transition = 'transform 0.35s ease';
+      curBack1.style.transform  = 'scale(0.88) translateY(32px)';
+    }
+
+    if (curTop) {
+      curTop.classList.replace('is-top','is-back-1');
+      curTop.style.transition = 'transform 0.35s ease';
+      curTop.style.transform  = 'scale(0.94) translateY(16px)';
+      curTop._cleanup && curTop._cleanup();
+    }
+
+    // Create rewound card and fly it back in from offscreen
+    const rewoundCard = createCard(prev.idx);
+    rewoundCard.classList.add('is-top');
+    rewoundCard.style.transform  = `translateX(${-window.innerWidth * 1.2}px) rotate(-30deg)`;
+    rewoundCard.style.opacity    = '0';
+    rewoundCard.style.transition = 'none';
+    stack.appendChild(rewoundCard);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        rewoundCard.style.transition = 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease';
+        rewoundCard.style.transform  = '';
+        rewoundCard.style.opacity    = '1';
+      });
+    });
+
+    spawnFlyEmoji(window.innerWidth / 2, window.innerHeight / 2, '⏪');
+
+    setTimeout(() => {
+      attachDrag(rewoundCard);
+      isAnimating = false;
+    }, 550);
+  }
+
+  /* ── swipe ── */
+  function swipeCard(card, dir) {
+    if (isAnimating) return;
+    isAnimating = true;
+    const idx = parseInt(card.dataset.index);
+    // Save to history for rewind
+    history.push({ idx, prevLiked: cats[idx].liked, prevCrushed: cats[idx].crushed });
+    cats[idx].liked = dir === 'right';
+    if (card._cleanup) card._cleanup();
+
+    card.style.transition = 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.4s ease';
+    card.style.transform  = `translate(${dir==='right'?window.innerWidth*1.5:-window.innerWidth*1.5}px,-40px) rotate(${dir==='right'?35:-35}deg)`;
+    card.style.opacity    = '0';
+
+    const rect = card.getBoundingClientRect();
+    spawnFlyEmoji(rect.left + rect.width/2, rect.top + rect.height/2, dir==='right' ? '💚' : '👋');
+
+    const stack = document.getElementById('cardStack');
+    const b1    = stack.querySelector('.is-back-1');
+    const b2    = stack.querySelector('.is-back-2');
+
+    if (b1) {
+      b1.classList.replace('is-back-1','is-top');
+      b1.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+      b1.style.transform  = '';
+      attachDrag(b1);
+    }
+    if (b2) {
+      b2.classList.replace('is-back-2','is-back-1');
+      b2.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+      b2.style.transform  = 'scale(0.94) translateY(16px)';
+    }
+
+    setTimeout(() => {
+      card.remove();
+      currentIndex++;
+      updateProgress();
+      const nbi = currentIndex + 2;
+      if (nbi < TOTAL) {
+        const nc = createCard(nbi);
+        nc.classList.add('is-back-2');
+        stack.insertBefore(nc, stack.firstChild);
+      }
+      updateRewindBadge();
+      isAnimating = false;
+      if (currentIndex >= TOTAL) setTimeout(showResults, 300);
+    }, 550);
+  }
+
+  /* ── emoji helpers ── */
+  function spawnFlyEmoji(x, y, emoji) {
+    const el = document.createElement('div');
+    el.className = 'fly-emoji';
+    el.textContent = emoji;
+    el.style.left = (x - 16) + 'px';
+    el.style.top  = (y - 16) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  /* ── ui ── */
+  function updateCounter() {
+    document.getElementById('counter').innerHTML = `Cat <strong>${currentIndex+1}</strong> / ${TOTAL}`;
+  }
+  function updateProgress() {
+    document.getElementById('progressBar').style.width = (currentIndex / TOTAL * 100) + '%';
+    if (currentIndex < TOTAL) updateCounter();
+  }
+
+  /* ── results ── */
+  function showResults() {
+    const crushedCats = cats.filter(c => c.crushed);
+    const likedOnly   = cats.filter(c => c.liked === true && !c.crushed);
+    const disliked    = cats.filter(c => c.liked === false);
+    const likeCount   = cats.filter(c => c.liked === true).length;
+
+    let emoji, title;
+    if      (likeCount === 0)  { emoji='😮'; title=`Not a <span>cat person?</span>`; }
+    else if (likeCount <= 3)   { emoji='🐱'; title=`Picky but <span>discerning!</span>`; }
+    else if (likeCount <= 7)   { emoji='😻'; title=`Certified <span>cat admirer!</span>`; }
+    else if (likeCount <= 11)  { emoji='🐾'; title=`Total <span>cat lover!</span>`; }
+    else                       { emoji='🏠'; title=`You need <span>all these cats!</span>`; }
+
+    document.getElementById('resultsEmoji').textContent   = emoji;
+    document.getElementById('resultsTitle').innerHTML     = title;
+    document.getElementById('resultsSub').textContent     = likeCount > 0
+      ? `You liked ${likeCount} out of ${TOTAL} cats`
+      : `You swiped left on all ${TOTAL} cats`;
+
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat-pill liked">💚 ${likeCount} liked</div>
+      ${crushedCats.length ? `<div class="stat-pill crushed">💎 ${crushedCats.length} crushed</div>` : ''}
+      <div class="stat-pill disliked">👋 ${disliked.length} passed</div>`;
+
+    const section = document.getElementById('likedSection');
+    section.innerHTML = '';
+
+    if (likeCount === 0 && crushedCats.length === 0) {
+      section.innerHTML = `
+        <div class="no-likes">
+          <span class="no-emoji">🐾</span>
+          <p>No favourites this time!<br>Try again to find your purr-fect match.</p>
+        </div>`;
+    } else {
+      /* crush spotlight */
+      if (crushedCats.length > 0) {
+        const spotDiv = document.createElement('div');
+        spotDiv.className = 'crush-spotlight';
+        const grid = document.createElement('div');
+        grid.className = `crush-spotlight-grid count-${crushedCats.length}`;
+        crushedCats.forEach((cat, i) => {
+          const item = document.createElement('div');
+          item.className = `crush-item count-${crushedCats.length}`;
+          item.style.animationDelay = (i * 0.1) + 's';
+          item.innerHTML = `
+            <img src="${cat.url}" alt="${cat.name}">
+            <div class="crush-badge-overlay">💎 CRUSH</div>
+            <div class="cat-name-overlay">${cat.name}</div>`;
+          item.addEventListener('click', () => spinItem(item));
+          grid.appendChild(item);
+        });
+        spotDiv.innerHTML = `<div class="section-label">💎 YOUR CRUSHES</div>`;
+        spotDiv.appendChild(grid);
+        section.appendChild(spotDiv);
+      }
+
+      /* liked grid */
+      if (likedOnly.length > 0) {
+        const likedWrap = document.createElement('div');
+        likedWrap.innerHTML = `<div class="section-label" style="margin-top:${crushedCats.length?'6px':'0'}">CATS YOU LOVED (${likedOnly.length})</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'liked-grid';
+        likedOnly.forEach((cat, i) => {
+          const item = document.createElement('div');
+          item.className = 'liked-item';
+          item.style.animationDelay = (i * 0.06) + 's';
+          item.innerHTML = `<img src="${cat.url}" alt="${cat.name}">`;
+          item.addEventListener('click', () => spinItem(item));
+          grid.appendChild(item);
+        });
+        likedWrap.appendChild(grid);
+        section.appendChild(likedWrap);
+      }
+    }
+
+    showScreen('results');
+  }
+
+  /* ── animated background canvas ── */
+  (function initBgCanvas() {
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    // t is a slow-growing value in seconds — avoids the huge rAF timestamp bug
+    let t = 0;
+    let lastTs = null;
+
+    const waves = [
+      { color: 'rgba(255,107,74,0.07)',  speed: 0.18, amp: 55, freq: 0.004,  yOff: 0.32 },
+      { color: 'rgba(46,196,182,0.055)', speed: 0.13, amp: 45, freq: 0.0032, yOff: 0.56 },
+      { color: 'rgba(255,184,0,0.05)',   speed: 0.22, amp: 35, freq: 0.005,  yOff: 0.74 },
+      { color: 'rgba(255,107,74,0.04)',  speed: 0.15, amp: 28, freq: 0.0022, yOff: 0.88 },
+    ];
+
+    const dots = Array.from({length: 22}, () => ({
+      x: Math.random(), y: Math.random(),
+      r: 2 + Math.random() * 3.5,
+      vx: (Math.random() - 0.5) * 0.00008,
+      vy: (Math.random() - 0.5) * 0.00006,
+      color: ['rgba(255,107,74,0.10)','rgba(46,196,182,0.09)','rgba(255,184,0,0.09)','rgba(196,168,130,0.10)'][Math.floor(Math.random()*4)],
+      phase: Math.random() * Math.PI * 2,
+    }));
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawWave(wave) {
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 5) {
+        const y = wave.yOff * H
+          + Math.sin(x * wave.freq + t * wave.speed) * wave.amp
+          + Math.sin(x * wave.freq * 1.6 + t * wave.speed * 0.7) * wave.amp * 0.35;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fillStyle = wave.color;
+      ctx.fill();
+    }
+
+    function tick(ts) {
+      // Compute dt in seconds, cap at 0.05s to prevent jumps after tab switches
+      if (lastTs !== null) t += Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
+
+      ctx.clearRect(0, 0, W, H);
+      waves.forEach(drawWave);
+
+      dots.forEach(d => {
+        d.x += d.vx; d.y += d.vy;
+        if (d.x < 0) d.x = 1; if (d.x > 1) d.x = 0;
+        if (d.y < 0) d.y = 1; if (d.y > 1) d.y = 0;
+        const pulse = 0.75 + 0.25 * Math.sin(t * 1.2 + d.phase);
+        ctx.beginPath();
+        ctx.arc(d.x * W, d.y * H, d.r * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = d.color;
+        ctx.fill();
+      });
+
+      // Subtle diagonal grid lines
+      ctx.strokeStyle = 'rgba(196,168,130,0.035)';
+      ctx.lineWidth = 1;
+      for (let i = -H; i < W + H; i += 65) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + H, H);
+        ctx.stroke();
+      }
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  /* ── instruction card click animations ── */
+  function animInstrCard(card) {
+    const anim  = card.dataset.anim;
+    const emoji = card.dataset.emoji;
+    const rect  = card.getBoundingClientRect();
+
+    // 1. Icon animation
+    card.classList.remove('anim-dislike','anim-rewind','anim-crush','anim-like');
+    void card.offsetWidth; // reflow
+    card.classList.add('anim-' + anim);
+
+    // 2. Flash overlay
+    card.classList.remove('flash');
+    void card.offsetWidth;
+    card.classList.add('flash');
+
+    // 3. Ripple from click centre
+    const ripple = document.createElement('span');
+    ripple.className = 'instr-ripple';
+    const size = Math.max(rect.width, rect.height) * 2;
+    ripple.style.width  = size + 'px';
+    ripple.style.height = size + 'px';
+    ripple.style.left   = (rect.width  / 2 - size / 2) + 'px';
+    ripple.style.top    = (rect.height / 2 - size / 2) + 'px';
+    // colour per type
+    const colors = { dislike:'rgba(255,107,74,0.18)', rewind:'rgba(124,58,237,0.14)', crush:'rgba(255,184,0,0.20)', like:'rgba(46,196,182,0.16)' };
+    ripple.style.background = colors[anim] || 'rgba(0,0,0,0.08)';
+    card.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+
+    // 4. Burst 3 emojis from the card
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const x = rect.left + rect.width  * (0.2 + Math.random() * 0.6);
+        const y = rect.top  + rect.height * (0.2 + Math.random() * 0.4);
+        spawnFlyEmoji(x, y, emoji);
+      }, i * 80);
+    }
+
+    // 5. Cleanup anim classes
+    setTimeout(() => {
+      card.classList.remove('anim-' + anim, 'flash');
+    }, 600);
+  }
+
+  /* ── QUIT POPUP LOGIC ── */
+  function openQuitPopup1() {
+    const overlay = document.getElementById('quitPopup1');
+    overlay.classList.add('visible');
+  }
+
+  function closeQuitPopup1() {
+    const overlay = document.getElementById('quitPopup1');
+    overlay.classList.remove('visible');
+  }
+
+  function closeQuitPopup2() {
+    const overlay = document.getElementById('quitPopup2');
+    overlay.classList.remove('visible');
+  }
+
+  function quitStay() {
+    // Wiggle the box, fire celebration emojis, then close
+    const box = document.getElementById('quitBox1');
+    box.classList.remove('wiggle');
+    void box.offsetWidth;
+    box.classList.add('wiggle');
+
+    const celebEmojis = ['🐱','😺','🐾','💚','✨','🎉'];
+    const rect = box.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => spawnFlyEmoji(cx + (Math.random()-0.5)*120, cy + (Math.random()-0.5)*60, celebEmojis[i % celebEmojis.length]), i * 60);
+    }
+
+    setTimeout(() => {
+      box.classList.remove('wiggle');
+      closeQuitPopup1();
+    }, 620);
+  }
+
+  function quitConfirm() {
+    // Close popup 1, open popup 2 with confetti burst
+    closeQuitPopup1();
+    setTimeout(() => {
+      const overlay2 = document.getElementById('quitPopup2');
+      overlay2.classList.add('visible');
+      // Burst 12 confetti pieces
+      const box2 = document.getElementById('quitBox2');
+      const rect = box2.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const confettiEmojis = ['🐱','🐾','✨','💎','😸','🌟','🐈','💫','⭐','🎊','🐾','✦'];
+      confettiEmojis.forEach((emoji, i) => {
+        const angle = (i / confettiEmojis.length) * Math.PI * 2;
+        const dist = 90 + Math.random() * 80;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist - 40;
+        const rot = (Math.random() - 0.5) * 540 + 'deg';
+        const dur = (0.7 + Math.random() * 0.4) + 's';
+
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.textContent = emoji;
+        piece.style.setProperty('--tx', tx + 'px');
+        piece.style.setProperty('--ty', ty + 'px');
+        piece.style.setProperty('--rot', rot);
+        piece.style.setProperty('--dur', dur);
+        piece.style.left = cx + 'px';
+        piece.style.top  = cy + 'px';
+        piece.style.animationDelay = (i * 0.03) + 's';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 1400);
+      });
+    }, 200);
+  }
+
+  function quitFine() {
+    // Spin-shrink exit, fire 3 happy emojis, then restartGame
+    const box2 = document.getElementById('quitBox2');
+    box2.classList.add('spin-exit');
+
+    const rect = box2.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    ['😄','🎉','🐱'].forEach((emoji, i) => {
+      setTimeout(() => spawnFlyEmoji(cx + (Math.random()-0.5)*80, cy + (Math.random()-0.5)*50, emoji), i * 100);
+    });
+
+    setTimeout(() => {
+      box2.classList.remove('spin-exit');
+      closeQuitPopup2();
+      restartGame();
+    }, 520);
+  }
+
+  function spinItem(el) {
+    el.classList.remove('spinning');
+    void el.offsetWidth;
+    el.classList.add('spinning');
+    const r = el.getBoundingClientRect();
+    spawnFlyEmoji(r.left + r.width/2, r.top + r.height/2, CAT_EMOJIS[Math.floor(Math.random()*CAT_EMOJIS.length)]);
+    setTimeout(() => el.classList.remove('spinning'), 700);
+  }
+</script>
+</body>
+</html>
